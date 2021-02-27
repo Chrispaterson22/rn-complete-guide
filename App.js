@@ -1,44 +1,51 @@
 import { StatusBar } from 'expo-status-bar'
 import React, { useState } from 'react'
-import {
-	StyleSheet,
-	Text,
-	View,
-	TextInput,
-	Button,
-	ScrollView,
-} from 'react-native'
+import { StyleSheet, View, FlatList, Button } from 'react-native'
+
+import GoalItem from './components/GoalItem'
+import GoalInput from './components/GoalInput'
 
 export default function App() {
-	const [enteredGoal, setEnteredGoal] = useState('')
 	const [courseGoals, setCourseGoals] = useState([])
+	const [isAddMode, setIsAddMode] = useState(false)
 
-	const goalInputHandler = enteredText => {
-		setEnteredGoal(enteredText)
+	const addGoalHandler = goalTitle => {
+		setCourseGoals(currentGoals => [
+			...courseGoals,
+			{ uid: Math.random().toString(), value: goalTitle },
+		]) //using arr function ensures current courseGoals is retrieved. To use FlatList must be object, key must be passed in here also.
+		setIsAddMode(false)
 	}
 
-	const addGoalHandler = () => {
-		setCourseGoals(currentGoals => [...courseGoals, enteredGoal]) //using arr function ensures current courseGoals is retrieved.
+	const removeGoalHandler = goalId => {
+		setCourseGoals(currentGoals => {
+			return currentGoals.filter(goal => goal.uid !== goalId)
+		})
+	}
+
+	const cancelGoalAddHandler = () => {
+		setIsAddMode(false)
 	}
 
 	return (
 		<View style={styles.screen}>
-			<View style={styles.inputContainer}>
-				<TextInput
-					placeholder='Course Goal'
-					style={styles.input}
-					onChangeText={goalInputHandler}
-					value={enteredGoal}
-				/>
-				<Button title='ADD' onPress={addGoalHandler} />
-			</View>
-			<ScrollView>
-				{courseGoals.map(goal => (
-					<View key={goal} style={styles.listItem}>
-						<Text>{goal}</Text>
-					</View> //shouldn't use goal as key as can enter same goal more than once and throw error!
-				))}
-			</ScrollView>
+			<Button title={'Add New Goal'} onPress={() => setIsAddMode(true)} />
+			<GoalInput
+				visible={isAddMode}
+				onAddGoal={addGoalHandler}
+				onCancel={cancelGoalAddHandler}
+			/>
+			<FlatList
+				keyExtractor={(item, index) => item.uid}
+				data={courseGoals}
+				renderItem={itemData => (
+					<GoalItem
+						uid={itemData.item.uid}
+						onDelete={removeGoalHandler}
+						title={itemData.item.value}
+					/>
+				)}
+			/>
 			<StatusBar style='auto' />
 		</View>
 	)
@@ -48,24 +55,5 @@ const styles = StyleSheet.create({
 	screen: {
 		paddingTop: 60,
 		paddingHorizontal: 30,
-	},
-	inputContainer: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-	},
-	input: {
-		width: '80%',
-		height: 40,
-		borderColor: 'black',
-		borderWidth: 1,
-		padding: 10,
-	},
-	listItem: {
-		padding: 10,
-		marginVertical: 10,
-		backgroundColor: '#ccc',
-		borderColor: 'black',
-		borderWidth: 1,
 	},
 })
